@@ -1,5 +1,7 @@
 # kser
 
+[![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
+
 Library to serialize, deserialize and execute tasks using Kafka.
 
 ## Example

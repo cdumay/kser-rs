@@ -185,6 +185,22 @@ fn main() {
 Configurations are stored in JSON files where keys and values MUST be strings. 
 Keys can be found on [librdkafka configuration documentation](https://github.com/edenhill/librdkafka/blob/master/CONFIGURATION.md).
 
+**Comsumer example**
+```json
+{
+  "bootstrap.servers": "kafka.example.com:9093,kafka-2.example.com:9093",
+  "security.protocol": "sasl_ssl",
+  "sasl.mechanisms": "PLAIN",
+  "sasl.username": "test",
+  "sasl.password": "1234",
+  "group.id": "hello.group",
+  "enable.auto.commit": "true",
+  "enable.partition.eof": "false",
+  "session.timeout.ms": "6000"
+}
+```
+
+
 ## Dependencies Links
 
 - **cdumay_result**: https://github.com/cdumay/cdumay-result-rs

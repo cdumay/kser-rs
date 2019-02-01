@@ -5,15 +5,11 @@ authors = ["Cédric Dumay <cedric.dumay@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-cdumay_error = { git = "https://github.com/cdumay/cdumay-errors-rs" }
-cdumay_result = { git = "https://github.com/cdumay/cdumay-result-rs"}
-env_logger = "0.6"
-hostname = "0.1"
+cdumay_error = { git = "https://github.com/cdumay/cdumay-errors-rs" , features = ["http"] }
+cdumay_job = { git = "https://github.com/cdumay/cdumay-job-rs" }
+cdumay_result = { git = "https://github.com/cdumay/cdumay-result-rs", features = ["cdumay-error"] }
+futures = "0.1"
 log = "0.4"
-rand = "0.6"
 rdkafka = { version = "0.17", features = ["ssl", "sasl"]}
-serde = "1.0"
-serde-value = "0.5"
-serde_derive = "1.0"
+rdkafka-sys = "0.11.4-0"
 serde_json = "1.0"
-uuid = { version = "0.7", features = ["v4", "serde"] }

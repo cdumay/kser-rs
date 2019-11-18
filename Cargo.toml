@@ -1,15 +1,23 @@
 [package]
 name = "kser"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Cédric Dumay <cedric.dumay@gmail.com>"]
-edition = "2018"
+license = "MIT"
+readme = "README.md"
+documentation = "https://docs.rs/kser"
+repository = "https://github.com/cdumay/rust-kser"
+homepage =  "https://github.com/cdumay/rust-kser"
+description = """A library to serialize and deserialize messages over kafka"""
+keywords = ["Error", "serde", "Result", "Kafka"]
+categories = ["caching", "data-structures", "encoding"]
 
 [dependencies]
-cdumay_error = { git = "https://github.com/cdumay/cdumay-errors-rs" , features = ["http"] }
-cdumay_job = { git = "https://github.com/cdumay/cdumay-job-rs" }
-cdumay_result = { git = "https://github.com/cdumay/cdumay-result-rs", features = ["cdumay-error"] }
+cdumay_error = { git = "https://github.com/cdumay/rust-cdumay_errors" }
+cdumay_job = { git = "https://github.com/cdumay/rust-cdumay_job" }
+cdumay_result = { git = "https://github.com/cdumay/rust-cdumay_result" }
 futures = "0.1"
 log = "0.4"
-rdkafka = { version = "0.17", features = ["ssl", "sasl"]}
-rdkafka-sys = "0.11.4-0"
+rdkafka =  { version = "0.21", features = ["ssl", "sasl"]}
+rdkafka-sys = "1.0.0"
 serde_json = "1.0"
+serde-value = "0.6"

@@ -1,24 +1,35 @@
+use std::collections::HashMap;
+use std::fs::File;
+use std::path::Path;
+
+use cdumay_error::ErrorInfo;
+use cdumay_job::{Message, MessageRepr};
+use futures::stream::Stream;
 use rdkafka::ClientConfig;
 use rdkafka::ClientContext;
+use rdkafka::config::RDKafkaLogLevel;
+use rdkafka::consumer::CommitMode;
 use rdkafka::consumer::Consumer as rdConsumer;
 use rdkafka::consumer::ConsumerContext;
 use rdkafka::consumer::Rebalance;
 use rdkafka::consumer::StreamConsumer;
 use rdkafka::error::KafkaResult;
-use futures::stream::Stream;
-use rdkafka::consumer::CommitMode;
 use rdkafka::Message as rdMessage;
-use std::path::Path;
-use crate::errors::KserErrors;
-use std::fs::File;
-use std::collections::HashMap;
-use rdkafka::config::RDKafkaLogLevel;
-use cdumay_error::ErrorRepr;
-use cdumay_error::ErrorReprBuilder;
-use cdumay_job::messages::MessageRepr;
+
+use crate::KserErrors;
 
 pub trait Registry {
     fn execute(&self, msg: &MessageRepr) -> cdumay_result::ResultRepr;
+}
+
+pub trait Consume: Sized {
+    type ErrorItem: ErrorInfo;
+    type RegistryItem: Registry;
+
+    fn new(config: &mut ClientConfig, topics: Vec<&str>, registry: Self::RegistryItem) -> Result<Self, Self::ErrorItem>;
+    fn from_file(filename: &str, topics: Vec<&str>, registry: Self::RegistryItem) -> Result<Self, Self::ErrorItem>;
+
+    fn run(&self);
 }
 
 
@@ -47,15 +58,21 @@ pub struct Consumer<R: Registry> {
     registry: R,
 }
 
-impl<R: Registry> Consumer<R> {
-    pub fn from_file(filename: &str, topics: Vec<&str>, registry: R) -> Result<Consumer<R>, ErrorRepr> {
+impl<R: Registry> Consume for Consumer<R> {
+    type ErrorItem = KserErrors;
+    type RegistryItem = R;
+
+    fn new(config: &mut ClientConfig, topics: Vec<&str>, registry: R) -> Result<Consumer<R>, KserErrors> {
+        let client: LoggingConsumer = config.create_with_context(CustomContext)?;
+        client.subscribe(&topics)?;
+        Ok(Consumer { client, registry })
+    }
+    fn from_file(filename: &str, topics: Vec<&str>, registry: R) -> Result<Consumer<R>, KserErrors> {
         match Path::new(filename).exists() {
-            false => Err(ErrorReprBuilder::new(KserErrors::CONFIGURATION_ERROR)
-                .message(format!("Configuration file '{}' doesn't exists", filename))
-                .build()
-            ),
+            false => Err(KserErrors::ConfigurationError(format!("Configuration file '{}' doesn't exists", filename))),
             true => {
-                let content: HashMap<String, String> = serde_json::from_reader(&File::open(filename)?)?;
+                let reader = File::open(filename)?;
+                let content: HashMap<String, String> = serde_json::from_reader(&reader)?;
                 let mut conf = ClientConfig::new();
                 for (k, v) in content.iter() {
                     conf.set(k, v);
@@ -65,23 +82,7 @@ impl<R: Registry> Consumer<R> {
             }
         }
     }
-    pub fn new(config: &mut ClientConfig, topics: Vec<&str>, registry: R) -> Result<Consumer<R>, ErrorRepr> {
-        let client: LoggingConsumer = match config.create_with_context(CustomContext) {
-            Err(err) => return Err(ErrorReprBuilder::new(KserErrors::CONFIGURATION_ERROR)
-                .message(format!("Failed to initialize consumer: {}", err))
-                .build()
-            ),
-            Ok(data) => data
-        };
-        match client.subscribe(&topics) {
-            Err(_) => Err(ErrorReprBuilder::new(KserErrors::CONFIGURATION_ERROR)
-                .message(format!("Failed to subscribe to topic(s): {:?}", &topics))
-                .build()
-            ),
-            Ok(_) => Ok(Consumer { client, registry })
-        }
-    }
-    pub fn run(&self) {
+    fn run(&self) {
         info!("Consumer starting...");
         let message_stream = self.client.start();
         for message in message_stream.wait() {

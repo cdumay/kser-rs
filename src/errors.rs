@@ -1,5 +1,6 @@
 use std::collections::BTreeMap;
 use std::error::Error;
+use std::fmt;
 
 use cdumay_error::{ErrorInfo, ErrorType, GenericErrors, Registry};
 use serde_value::Value;
@@ -57,6 +58,12 @@ impl ErrorInfo for KserErrors {
             KserErrors::KafkaError(_) => KserTypeErrors::KAFKA_ERROR.msgid(),
             KserErrors::JSONError(_) => GenericErrors::SERIALIZATION_ERROR.msgid(),
         }
+    }
+}
+
+impl fmt::Display for KserErrors {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "Error {}: {}", self.msgid(), self.message())
     }
 }
 
